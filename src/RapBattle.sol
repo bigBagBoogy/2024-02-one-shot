@@ -66,7 +66,7 @@ contract RapBattle {
         defender = address(0);
         emit Battle(msg.sender, _tokenId, random < defenderRapperSkill ? _defender : msg.sender);
 
-        // If random <= defenderRapperSkill -> defenderRapperSkill wins, otherwise they lose
+        // If random((skill)number) <= defenderRapperSkill -> defenderRapperSkill wins, otherwise they lose
         if (random <= defenderRapperSkill) {
             // We give them the money the defender deposited, and the challenger's bet
             credToken.transfer(_defender, defenderBet);

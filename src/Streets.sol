@@ -12,7 +12,7 @@ contract Streets is IERC721Receiver {
         address owner;
     }
 
-    mapping(uint256 tokenId => Stake stake) public stakes;
+    mapping(uint256 tokenId => Stake stake) public stakes; // who stakes what
 
     // ERC721 token contract
     IOneShot public oneShotContract;
@@ -37,7 +37,7 @@ contract Streets is IERC721Receiver {
     // Unstake tokens by transferring them back to their owner
     function unstake(uint256 tokenId) external {
         require(stakes[tokenId].owner == msg.sender, "Not the token owner");
-        uint256 stakedDuration = block.timestamp - stakes[tokenId].startTime;
+        uint256 stakedDuration = block.timestamp - stakes[tokenId].startTime; // @audit log this  in test!
         uint256 daysStaked = stakedDuration / 1 days;
 
         // Assuming RapBattle contract has a function to update metadata properties
