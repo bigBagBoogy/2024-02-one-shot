@@ -35,8 +35,9 @@ contract RapBattle {
         credToken = ICredToken(_credibilityContract);
     }
 
-    function goOnStageOrBattle(uint256 _tokenId, uint256 _credBet) external {
+    function goOnStageOrBattle(uint256 _tokenId, uint256 _credBet) public {
         if (defender == address(0)) {
+            // no-one is waiting to battle yet
             defender = msg.sender;
             defenderBet = _credBet;
             defenderTokenId = _tokenId;

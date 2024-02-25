@@ -4,3 +4,12 @@ out = "out"
 libs = ["lib"]
 
 remappings = ["@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"]
+
+[fuzz]
+runs = 256
+seed = "0x1"
+
+[invariant]
+runs = 100
+depth = 32
+fail_on_revert = true

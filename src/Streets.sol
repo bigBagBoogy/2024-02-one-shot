@@ -12,7 +12,7 @@ contract Streets is IERC721Receiver {
         address owner;
     }
 
-    mapping(uint256 tokenId => Stake stake) public stakes; // who stakes what
+    mapping(uint256 tokenId => Stake stake) public stakes; // who stakes what and startTime
 
     // ERC721 token contract
     IOneShot public oneShotContract;

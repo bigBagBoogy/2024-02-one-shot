@@ -17,18 +17,24 @@ contract Handler is Test {
     address user;
     address challenger;
 
+    uint256 public someGhostVar = 55;
+    uint256 public defenderBet;
+    uint256 public rapperId;
+    // Mapping to track minted tokens
+    mapping(uint256 => bool) public isMinted;
+
     constructor(
         RapBattle _rapBattle,
         OneShot _oneShot,
         Streets _streets,
-        // Credibility _cred,
+        Credibility _cred,
         address _user,
         address _challenger
     ) {
         rapBattle = _rapBattle;
         oneShot = _oneShot;
         streets = _streets;
-        // cred = _cred;
+        cred = _cred;
         user = _user;
         challenger = _challenger;
     }
@@ -41,19 +47,63 @@ contract Handler is Test {
     // so that if there is no revert, but the bets don't match the test should fail
     // if 2 rappers initiate, we'll check if their bettings match
 
-    function goOnStageOrBattle(uint256 credBet, uint256 credBet2) public {
+    function mintRapper() public {
+        // Check if tokenId 0 has already been minted
+        if (isMinted[0]) {
+            return; // Already minted
+        }
         vm.startPrank(user);
-        oneShot.mintRapper(); // rapper 0
-        oneShot.approve(address(rapBattle), 0); // approve contract for tokenId 0
-        credBet = bound(credBet, 0, 10);
-        rapBattle.goOnStageOrBattle(0, credBet); // ID, _credBet amount
-        vm.stopPrank();
-
-        vm.startPrank(challenger);
         oneShot.mintRapper();
-        oneShot.approve(address(rapBattle), 1);
-        credBet2 = bound(credBet2, 0, 10);
-        rapBattle.goOnStageOrBattle(1, credBet2); // ID, _credBet amount
+        vm.stopPrank();
+    }
+    // defender go to battle
+
+    function goOnStageOrBattle(uint256 _credBet) public {
+        if (oneShot.ownerOf(0) != user) {
+            // if not minted yet
+            return;
+        }
+        uint256 balanceOfUser = cred.balanceOf(user);
+        defenderBet = bound(_credBet, 0, balanceOfUser);
+        vm.startPrank(user); // Alice: [0xBf0b5A4099F0bf6c8bC4252eBeC548Bae95602Ea]
+        // rapperId = oneShot.getNextTokenId() - 1;
+        oneShot.approve(address(rapBattle), 0); // address to, uint256 tokenId
+        cred.approve(address(rapBattle), defenderBet);
+
+        rapBattle.goOnStageOrBattle(0, defenderBet); // ID, _credBet amount uint256 _tokenId, uint256 _credBet
+        vm.stopPrank();
+    }
+
+    function stake() public {
+        if (oneShot.ownerOf(0) == user) {
+            vm.startPrank(user);
+            oneShot.approve(address(streets), 0);
+            streets.stake(0);
+            vm.stopPrank();
+        } else if (oneShot.ownerOf(1) == user) {
+            vm.startPrank(user);
+            oneShot.approve(address(streets), 1);
+            streets.stake(1);
+            vm.stopPrank();
+        } else {
+            console.log("no one owns tokenId 0 or 1");
+        }
+    }
+
+    function unStake() public {
+        (, address owner) = streets.stakes(0);
+        if (owner == address(streets)) {
+            // if id`0` is being staked
+            vm.warp(4 days + 1);
+            vm.startPrank(user);
+            streets.unstake(0);
+            vm.stopPrank();
+        } else if (owner == address(user)) {
+            // only unstake if id`0` is being staked
+            return;
+        } else {
+            console.log("unstake: no one owns tokenId 0");
+        }
     }
 }
 

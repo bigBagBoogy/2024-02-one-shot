@@ -30,18 +30,34 @@ contract Invariant is Test {
         oneShot.setStreetsContract(address(streets));
         cred.setStreetsContract(address(streets));
         // when deploying handler, need to pass constructor params
-        handler = new Handler(rapBattle, oneShot, streets, user, challenger);
+        handler = new Handler(rapBattle, oneShot, streets, cred, user, challenger);
 
-        bytes4[] memory selectors = new bytes4[](1);
+        bytes4[] memory selectors = new bytes4[](4);
         selectors[0] = handler.goOnStageOrBattle.selector;
+        selectors[1] = handler.stake.selector;
+        selectors[2] = handler.unStake.selector;
+        selectors[3] = handler.mintRapper.selector;
 
         targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
     }
 
     function invariant_test_BetsMustMatch() public {
-        if (user[_credBet] == challenger[_credBet]) {
-            vm.expectRevert();
+        // console.log(handler.someGhostVar());
+        if (rapBattle.defender() == address(0)) {
+            // if there is no defender
+            return;
+        } else {
+            uint256 _credBet = 3;
+            vm.startPrank(challenger);
+            oneShot.mintRapper(); // = challenger = slim shady = tokenId
+            uint256 challengerRapperId = oneShot.getNextTokenId();
+            oneShot.approve(address(rapBattle), challengerRapperId); // takes:  spender, (erc721)rapperId
+            cred.approve(address(rapBattle), 10);
+            console.log("defenderBet = ", handler.defenderBet());
+            if (handler.defenderBet() == _credBet) {
+                vm.expectRevert();
+                rapBattle.goOnStageOrBattle(challengerRapperId, _credBet); // ID, _credBet amount
+            }
         }
-        rapBattle.goOnStageOrBattle(1, 1);
     }
 }

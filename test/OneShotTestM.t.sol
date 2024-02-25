@@ -112,11 +112,23 @@ contract RapBattleTest is Test {
         vm.startPrank(user);
         oneShot.approve(address(streets), 0);
         streets.stake(0);
-        (, address owner) = streets.stakes(0);
+        (, address owner) = streets.stakes(0); // the comma here is startTime
         assert(owner == address(user));
+        console.log(oneShot.ownerOf(0)); // now the streets contract is owner of the nft
+        vm.warp(4 days + 1);
         streets.unstake(0);
+        console.log(cred.balanceOf(address(user)));
+
+        oneShot.approve(address(streets), 0);
+
+        streets.stake(0);
+        vm.warp(8 days + 1);
+        streets.unstake(0);
+
         (, address newOwner) = streets.stakes(0);
         assert(newOwner == address(0));
+        console.log(oneShot.ownerOf(0)); // now Alice is owner of the nft
+        console.log(cred.balanceOf(address(user)));
     }
 
     // Test cred is minted when a rapper is staked for at least one day
@@ -258,5 +270,51 @@ contract RapBattleTest is Test {
             streets.onERC721Received(address(0), user, 0, "")
                 == bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
         );
+    }
+
+    function testAll() public {
+        vm.startPrank(user);
+        oneShot.mintRapper();
+        console.log("owner of just minted rapper: ", oneShot.ownerOf(0));
+        oneShot.approve(address(streets), 0);
+        streets.stake(0);
+        vm.stopPrank();
+
+        vm.startPrank(challenger);
+        oneShot.mintRapper();
+        console.log("owner of just minted challenger rapper: ", oneShot.ownerOf(1));
+        oneShot.approve(address(streets), 1);
+        streets.stake(1);
+        vm.stopPrank();
+
+        vm.warp(4 days + 1);
+
+        vm.prank(user);
+        streets.unstake(0);
+        console.log("cred of user after unstake1 : ", cred.balanceOf(address(user)));
+
+        vm.prank(challenger);
+        streets.unstake(1);
+        console.log("cred of challenger after unstake1 : ", cred.balanceOf(address(challenger)));
+
+        vm.startPrank(user);
+        oneShot.approve(address(streets), 0);
+        streets.stake(0);
+        vm.stopPrank();
+
+        vm.startPrank(challenger);
+        oneShot.approve(address(streets), 1);
+        streets.stake(1);
+        vm.stopPrank();
+
+        vm.warp(8 days + 1);
+
+        vm.prank(user);
+        streets.unstake(0);
+        console.log("cred of user after unstake2 : ", cred.balanceOf(address(user)));
+
+        vm.prank(challenger);
+        streets.unstake(1);
+        console.log("cred of challenger after unstake2 : ", cred.balanceOf(address(challenger)));
     }
 }
